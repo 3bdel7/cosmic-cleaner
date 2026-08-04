@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmic Cleaners — Design Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Saira:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#03060c; --panel:rgba(8,16,28,.78); --line:#173453; --line2:#2b5f8f;
+    --cyan:#37c8ff; --cyan-soft:#7fb8d9; --gold:#ffd23f; --up:#4ade80; --down:#ff5b5b; --amber:#ffb454;
+    --text:#dbe8f5; --dim:#7d93ad;
+    --f-disp:'Orbitron',sans-serif; --f-body:'Saira',sans-serif; --f-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{background:var(--void);scroll-behavior:smooth;}
+  body{background:var(--void);color:var(--text);font-family:var(--f-body);font-size:15px;line-height:1.62;}
+  ::selection{background:rgba(55,200,255,.25);}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px clamp(13px,3vw,34px) 80px;}
+
+  .cover{border:1px solid var(--line2);background:linear-gradient(135deg,rgba(13,30,52,.92),rgba(6,12,22,.92));
+    clip-path:polygon(22px 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%,0 22px);
+    padding:32px clamp(18px,3vw,38px);margin-bottom:22px;}
+  .kicker{font-family:var(--f-mono);font-size:10px;letter-spacing:.24em;color:var(--cyan);text-transform:uppercase;}
+  .cover h1{font-family:var(--f-disp);font-size:clamp(21px,4.4vw,34px);font-weight:900;letter-spacing:.05em;
+    text-transform:uppercase;line-height:1.18;margin:10px 0 12px;}
+  .cover h1 span{color:var(--cyan);}
+  .cover p{color:var(--cyan-soft);max-width:74ch;font-size:14.5px;}
+  .stats{display:flex;gap:24px;flex-wrap:wrap;margin-top:22px;}
+  .stats b{display:block;font-family:var(--f-disp);font-size:20px;font-weight:900;color:var(--gold);line-height:1;}
+  .stats span{font-family:var(--f-mono);font-size:9px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;display:block;margin-top:5px;}
+
+  .partbar{border:1px solid var(--line2);background:rgba(8,20,36,.7);padding:16px 20px;margin:34px 0 20px;
+    clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px);}
+  .partbar .pn{font-family:var(--f-mono);font-size:10px;letter-spacing:.24em;color:var(--cyan);text-transform:uppercase;}
+  .partbar h2{font-family:var(--f-disp);font-size:clamp(17px,3vw,24px);font-weight:900;letter-spacing:.06em;text-transform:uppercase;margin:6px 0 8px;}
+  .partbar p{color:var(--cyan-soft);font-size:13.5px;max-width:78ch;}
+
+  h3{font-family:var(--f-disp);font-size:14px;font-weight:700;letter-spacing:.06em;margin-bottom:10px;}
+  h4{font-family:var(--f-disp);font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:11px;}
+  .sec{margin-bottom:16px;scroll-margin-top:14px;}
+  p{margin-bottom:11px;} p:last-child{margin-bottom:0;}
+  .lede{color:var(--dim);font-size:14.5px;max-width:78ch;margin-bottom:16px;}
+  .lede b{color:var(--text);}
+
+  .panel{background:var(--panel);border:1px solid var(--line);padding:20px;
+    clip-path:polygon(13px 0,100% 0,100% calc(100% - 13px),calc(100% - 13px) 100%,0 100%,0 13px);margin-bottom:14px;}
+  .panel.crit{border-color:#6e1a1a;} .panel.warn{border-color:#6e4a1a;} .panel.good{border-color:#1a5e35;}
+
+  .verdict{font-family:var(--f-mono);font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    padding:3px 9px;display:inline-block;margin-bottom:10px;}
+  .v-crit{color:var(--down);border:1px solid #6e1a1a;background:rgba(42,8,8,.85);}
+  .v-bal{color:var(--amber);border:1px solid #6e4a1a;background:rgba(42,28,8,.85);}
+  .v-ok{color:var(--up);border:1px solid #1a5e35;background:rgba(8,32,18,.85);}
+  .v-new{color:var(--cyan);border:1px solid #164a6e;background:rgba(8,25,42,.85);}
+
+  .find{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;}
+  .find .num{font-family:var(--f-disp);font-size:26px;font-weight:900;color:var(--line2);line-height:1;flex:none;width:44px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-family:var(--f-mono);font-size:9px;font-weight:600;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--dim);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:9px 10px;border-bottom:1px solid rgba(23,52,83,.35);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .tw{overflow-x:auto;}
+  .mono{font-family:var(--f-mono);} .g{color:var(--gold);font-family:var(--f-mono);}
+  .c{color:var(--cyan);font-family:var(--f-mono);} .u{color:var(--up);} .d{color:var(--down);} .a{color:var(--amber);}
+  .muted{color:var(--dim);}
+
+  .tl th{position:sticky;top:0;background:#060c16;z-index:2;}
+  .tl td{font-size:12.5px;}
+  .tl .rn{font-family:var(--f-disp);font-size:11.5px;font-weight:700;white-space:nowrap;color:#eaf4fd;}
+  .tl .rn em{display:block;font-style:normal;font-size:8.5px;letter-spacing:.1em;color:#5c7591;}
+  .tl .cost{font-family:var(--f-mono);color:var(--gold);white-space:nowrap;}
+  .tl .tm{font-family:var(--f-mono);color:var(--cyan);white-space:nowrap;}
+  .tl .cum{font-family:var(--f-mono);color:var(--dim);white-space:nowrap;font-size:11.5px;}
+  .tl .st{font-family:var(--f-mono);font-size:11.5px;white-space:nowrap;color:#b9cade;}
+  .tl .st em{display:block;font-style:normal;font-size:8.5px;letter-spacing:.1em;color:#5c7591;text-transform:uppercase;}
+  .tl tr.dip{background:rgba(74,222,128,.055);}
+  .tl tr.dip .tm{color:var(--up);font-weight:600;}
+  .buy{margin-bottom:5px;line-height:1.4;} .buy:last-child{margin-bottom:0;}
+  .buy b{font-weight:600;}
+  .buy em{display:block;font-style:normal;font-size:10.5px;color:var(--dim);font-family:var(--f-mono);}
+  .bk{font-family:var(--f-mono);font-size:8.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:1px 6px;margin-right:7px;}
+  .bk.jetpack{color:var(--cyan);border:1px solid #164a6e;background:rgba(8,25,42,.9);}
+  .bk.magnet{color:#ff8a72;border:1px solid #6e2a1a;background:rgba(42,14,8,.9);}
+  .bk.zone{color:var(--up);border:1px solid #1a5e35;background:rgba(8,32,18,.9);}
+  .bk.drone{color:var(--gold);border:1px solid #6e5a1a;background:rgba(42,34,8,.9);}
+  .none{color:#4a5d73;font-size:11.5px;font-style:italic;}
+
+  ul.facts{list-style:none;}
+  ul.facts li{padding:9px 0 9px 17px;border-bottom:1px solid rgba(23,52,83,.4);font-size:13.5px;color:#c3d3e4;position:relative;}
+  ul.facts li::before{content:'';position:absolute;left:2px;top:17px;width:6px;height:6px;background:var(--cyan);opacity:.75;transform:rotate(45deg);}
+  ul.facts li:last-child{border-bottom:none;}
+  ul.facts li b{color:var(--text);}
+  ul.facts.warn li::before{background:var(--amber);}
+  ul.facts.bad li::before{background:var(--down);}
+  ul.facts.good li::before{background:var(--up);}
+
+  .kv{font-family:var(--f-mono);font-size:12.5px;}
+  .kv div{display:flex;justify-content:space-between;gap:14px;padding:5px 0;border-bottom:1px dashed rgba(23,52,83,.55);}
+  .kv div:last-child{border-bottom:none;}
+  .kv span{color:var(--dim);letter-spacing:.06em;text-transform:uppercase;font-size:11px;}
+  .kv b{color:var(--text);white-space:nowrap;}
+
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;}
+  .cols>.panel{min-width:0;margin-bottom:0;}
+  .cols3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;}
+  .cols3>.panel{min-width:0;margin-bottom:0;}
+
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);margin-bottom:14px;}
+  .vs>div{padding:16px 18px;}
+  .vs .now{border-right:1px solid var(--line);background:rgba(42,8,8,.18);}
+  .vs .then{background:rgba(8,32,18,.18);}
+  .vs h5{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:9px;}
+  .vs .now h5{color:var(--down);} .vs .then h5{color:var(--up);}
+  .vs p{font-size:13px;color:#c3d3e4;}
+  @media(max-width:640px){.vs{grid-template-columns:1fr;} .vs .now{border-right:none;border-bottom:1px solid var(--line);}}
+
+  .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:22px;}
+  .toc a{display:block;padding:11px 13px;border:1px solid var(--line);color:var(--cyan-soft);text-decoration:none;font-size:12.5px;cursor:pointer;transition:all .12s;}
+  .toc a:hover{border-color:var(--cyan);color:var(--text);background:rgba(55,200,255,.05);}
+  .toc a b{display:block;font-family:var(--f-mono);font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:3px;}
+
+  .formula{font-family:var(--f-mono);font-size:clamp(11.5px,2.2vw,14px);color:var(--gold);line-height:2;overflow-x:auto;}
+  .rank{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(23,52,83,.4);}
+  .rank:last-child{border-bottom:none;}
+  .rank .rr{font-family:var(--f-mono);font-size:10px;color:var(--dim);width:62px;flex:none;letter-spacing:.1em;}
+  .rank .rname{font-family:var(--f-disp);font-size:12px;font-weight:700;letter-spacing:.06em;width:150px;flex:none;color:var(--gold);}
+  .rank .rdesc{font-size:12.5px;color:#c3d3e4;}
+  @media(max-width:620px){.rank{flex-wrap:wrap;} .rank .rname{width:auto;}}
+
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
+    font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:#3d5470;text-transform:uppercase;text-align:center;}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="cover">
+  <div class="kicker">Player Report · Balance, Progression &amp; Gameplay</div>
+  <h1>Cosmic <span>Cleaners</span><br>Design Report</h1>
+  <p>Three parts. What the game does today and the four problems in its own numbers that will cap it. Every recommendation gathered from play and community discussion. Then a full redesign — economy, progression, and the gameplay systems that would make this a game people keep playing past rebirth 30.</p>
+  <div class="stats">
+    <div><b>4</b><span>Game-capping problems</span></div>
+    <div><b>28</b><span>Recommendations</span></div>
+    <div><b>30</b><span>Rebirths fully costed</span></div>
+    <div><b>37h</b><span>Proposed core arc</span></div>
+    <div><b>10</b><span>Verified sales behind the model</span></div>
+  </div>
+</div>
+
+<div class="toc">
+  <a onclick="document.getElementById('p1').scrollIntoView()"><b>Part 1</b>The game today &amp; what breaks it</a>
+  <a onclick="document.getElementById('p2').scrollIntoView()"><b>Part 2</b>Every recommendation</a>
+  <a onclick="document.getElementById('p3').scrollIntoView()"><b>Part 3</b>The redesigned game</a>
+  <a onclick="document.getElementById('timeline').scrollIntoView()"><b>Part 3 · core</b>Rebirth-by-rebirth path</a>
+  <a onclick="document.getElementById('gaps').scrollIntoView()"><b>Appendix</b>Assumptions &amp; gaps</a>
+</div>
+
+<!-- =================== PART 1 =================== -->
+<div class="partbar" id="p1">
+  <div class="pn">Part One</div>
+  <h2>The Game Today, And What Breaks It</h2>
+  <p>The core loop works and the recent storage patch was a real improvement. What follows is not about difficulty — it is four places where the game's own numbers work against it, each provable from measured play or from the game's source values.</p>
+</div>
+
+<div class="sec">
+  <div class="cols">
+    <div class="panel">
+      <h4>Verified sale formula</h4>
+      <div class="formula">total = [ (10 × normal) + (30 × charged) ]<br>&nbsp;&nbsp;× (1 + market%) × (1 + event%)<br>&nbsp;&nbsp;× (1 + GT lv × 10%)<br>&nbsp;&nbsp;× (VIP ? 1.10 : 1) × (2X ? 2.00 : 1)<br>&nbsp;&nbsp;× (1 + crew × 5%)</div>
+      <p class="muted" style="margin-top:11px;font-size:13px;">Verified against ten real sales, maximum error 0.20%, all of it explained by the game rounding market percentages for display. Bonuses compound — they do not add.</p>
+    </div>
+    <div class="panel">
+      <h4>Measured baseline</h4>
+      <div class="kv">
+        <div><span>Normal / charged ingot</span><b>10 / 30 credits</b></div>
+        <div><span>Market swing cap</span><b>±30%, rolls every 3 min</b></div>
+        <div><span>Rebirth cost</span><b>2,500 × 1.4<sup>n</sup></b></div>
+        <div><span>Round trip</span><b>≈90 seconds</b></div>
+        <div><span>Storage at max gear</span><b>435</b></div>
+        <div><span>Measured gather rate</span><b>4.83 units/sec</b></div>
+        <div><span>Full-plot furnace capacity</span><b>25 units/sec</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel crit">
+  <div class="find"><div class="num">01</div><div>
+    <span class="verdict v-crit">Dominated options · almost certainly a bug</span>
+    <h3>The most expensive furnace in the game is the worst purchase in the game</h3>
+  </div></div>
+  <p>From the game's own source, furnace smelt times run 5, 4, 3, 2, 1 seconds per scrap across V1–V5 — a clean fivefold gain. But <b>V1 and V2 occupy a quarter of a plot cell each while V3 upward occupy a full cell.</b> Once footprint is counted, the ladder inverts.</p>
+  <div class="tw" style="margin-top:12px;"><table>
+    <thead><tr><th>Tier</th><th>Per cell</th><th>Cost/cell</th><th>Units/s per cell</th><th>Full 5×5 plot</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td><b>V1 Ember</b></td><td class="c">4</td><td class="g">600</td><td class="mono">0.80</td><td class="mono">20.0/s — 15,000 cr</td><td class="u">Best value in the game</td></tr>
+      <tr><td><b>V2 Solar</b></td><td class="c">4</td><td class="g">1,200</td><td class="mono u">1.00</td><td class="mono">25.0/s — 30,000 cr</td><td class="u">Optimal — ties the ceiling at half V5's price</td></tr>
+      <tr><td><b>V3 Plasma</b></td><td class="c">1</td><td class="g">600</td><td class="mono">0.33</td><td class="mono">8.3/s — 15,000 cr</td><td class="d">Beaten by V1 at identical cost</td></tr>
+      <tr><td><b>V4 Nova</b></td><td class="c">1</td><td class="g">1,200</td><td class="mono">0.50</td><td class="mono">12.5/s — 30,000 cr</td><td class="d">Beaten by V2 at identical cost</td></tr>
+      <tr><td><b>V5 Supernova</b></td><td class="c">1</td><td class="g">2,400</td><td class="mono u">1.00</td><td class="mono">25.0/s — 60,000 cr</td><td class="d">Same output as V2, double the money</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:13px;">A player who saves for the top furnace ends up strictly worse off than one who bought the second-cheapest. <b>Crushers do not have this problem</b> — every crusher tier takes a full cell, so their ladder rewards upgrading correctly. Same speed curve, same source file, opposite outcome. That contrast is the strongest evidence this is unintended rather than designed.</p>
+</div>
+
+<div class="panel crit">
+  <div class="find"><div class="num">02</div><div>
+    <span class="verdict v-crit">Economy · caps the game's lifespan</span>
+    <h3>Exponential cost against bounded income</h3>
+  </div></div>
+  <p>Rebirth cost is exactly <b>2,500 × 1.4<sup>n</sup></b>, verified to the credit. Every rebirth costs 40% more than the last, forever, while gathering rate is bounded by storage, magnet pull and a finite upgrade tree. Two curves that diverge never reconverge.</p>
+  <div class="tw" style="margin-top:12px;"><table>
+    <thead><tr><th>Rebirth</th><th>Cost</th><th>Time for that single rebirth</th></tr></thead>
+    <tbody>
+      <tr><td><b>10 → 11</b></td><td class="g">72,314</td><td class="u">4 minutes</td></tr>
+      <tr><td><b>15 → 16</b></td><td class="g">388,920</td><td class="u">22 minutes</td></tr>
+      <tr><td><b>20 → 21</b></td><td class="g">2,091,706</td><td class="a">2 hours</td></tr>
+      <tr><td><b>25 → 26</b></td><td class="g">11,249,699</td><td class="d">10.6 hours</td></tr>
+      <tr><td><b>30 → 31</b></td><td class="g">60,503,581</td><td class="d">57 hours</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:13px;">Rebirth 15 alone costs roughly 40% of what all fourteen prior rebirths cost combined. The storage patch moved the wall from rebirth 15 to about rebirth 20 — worth doing, but the shape is unchanged.</p>
+  <p>Holding a thirty-rebirth game inside a sane time budget needs roughly nine- to fifteen-fold time growth. <b>The current gear ladder offers about 26× of gather-rate headroom in total.</b> At ×1.4, cost grows 17,287× across thirty rebirths and would need <b>1,921×</b> rate growth to stay playable. Storage and magnets cannot supply that. Only multiplied scrap density can — which is why zones are not a content preference but a mathematical requirement.</p>
+</div>
+
+<div class="panel crit">
+  <div class="find"><div class="num">03</div><div>
+    <span class="verdict v-crit">Systems mismatch · removes a whole progression track</span>
+    <h3>The base processes five times more than a player can deliver</h3>
+  </div></div>
+  <p>A round trip averages 90 seconds and returns 435 units, fixing the effective gathering rate at <b>4.83 units per second</b>. A full 5×5 plot of Solar V2 furnaces processes <b>25 units per second</b>.</p>
+  <div class="kv" style="margin-top:12px;">
+    <div><span>Furnace capacity, full plot</span><b>25.0 units/sec</b></div>
+    <div><span>Actual demand from gathering</span><b>4.83 units/sec</b></div>
+    <div><span>Utilisation</span><b class="d">19%</b></div>
+    <div><span>Cells actually needed</span><b class="u">5</b></div>
+    <div><span>Cells doing nothing</span><b class="d">20</b></div>
+  </div>
+  <p style="margin-top:13px;">A full load is consumed in 17 seconds, then the furnaces idle for the remaining 73 seconds of every trip. Expanding the plot past roughly five usable cells buys nothing — which quietly removes plot expansion as a goal and makes most of the furnace shop irrelevant.</p>
+</div>
+
+<div class="panel crit">
+  <div class="find"><div class="num">04</div><div>
+    <span class="verdict v-crit">Content · the reason players stop</span>
+    <h3>There is no content source outside the grind</h3>
+  </div></div>
+  <p>Zones are almost identical, so travelling further is never rewarded and the map beyond the nearest belt is decoration. But the deeper issue is what that reveals: <b>the game's only content source is the number curve.</b> When the numbers stop being interesting, content stops entirely.</p>
+  <p>Every game that retains on this platform generates content from somewhere the developers are not hand-building each week — <b>other players</b> (trading, social, co-op), <b>randomness</b> (rare drops, mutations, weather), or <b>skill and builds</b> (loadouts, minmaxing, PvP). Cosmic Cleaners currently has none of the three.</p>
+  <p>There is also a stated concept that never reached the game. The premise is that NASO dispatches workers on <b>missions</b> to clear scrap, and that workers upgrade their <b>bases</b>. There are no missions, no rank, no company relationship, and the base is a sell point rather than a project. <b>The concept is not missing — it is unimplemented.</b> That is a far easier problem to fix, and Part 3 builds directly on it.</p>
+</div>
+
+<!-- =================== PART 2 =================== -->
+<div class="partbar" id="p2">
+  <div class="pn">Part Two</div>
+  <h2>Every Recommendation</h2>
+  <p>Everything gathered from play, from source values, and from community discussion — sorted by how much work each takes against how much it returns. Part 3 then applies them.</p>
+</div>
+
+<div class="cols3">
+  <div class="panel good">
+    <h4>Quick wins · ship this week</h4>
+    <ul class="facts good">
+      <li><b>Fix the furnace footprint inversion.</b> Normalise footprints or reprice V3–V5. Three of five tiers are dead content today.</li>
+      <li><b>Show scrap counts inside machines</b> instead of "Crushing…" and "Smelting…". The animation already says work is happening; the number says how full and whether to come back.</li>
+      <li><b>Show total pending ingots</b> across all furnaces, so a backlog is visible without walking to each one.</li>
+      <li><b>Put a countdown on every event</b>, with a hover tooltip explaining what it does.</li>
+      <li><b>Add an index or codex</b> for scrap, jetpacks, magnets, furnaces, crushers. Players are reverse-engineering this from screenshots.</li>
+      <li><b>Show effectiveness when buying</b> a crusher or furnace — a plain "processes X per second" line.</li>
+      <li><b>Let players customise portal colour.</b> Portals are currently easy to confuse.</li>
+      <li><b>Give every furnace and crusher a capacity ceiling.</b> One was observed holding 1,073 ingots with no cap, which removes any pressure to return.</li>
+    </ul>
+  </div>
+
+  <div class="panel warn">
+    <h4>Balance · needs a tuning pass</h4>
+    <ul class="facts warn">
+      <li><b>Moderate the rebirth cost curve.</b> ×1.4 forever cannot work against bounded income.</li>
+      <li><b>Rescale jetpack storage.</b> A 60-slot starter leaves the ladder nowhere to grow and makes the first upgrade invisible.</li>
+      <li><b>Reprice Vortex X or cut it.</b> At its live numbers it is the worst cost-per-slot in the line — a trap purchase.</li>
+      <li><b>Rebalance crusher and furnace speed and price together</b> once footprint is fixed.</li>
+      <li><b>Gate gear behind rebirth count, not price.</b> Stars are purchasable; rebirth count is not. Only rebirth gates survive contact with the store.</li>
+      <li><b>Move respawn to the hub</b> and shuffle portal order. Spawning at base enables a rejoin macro — dump scrap, fly out, rejoin to teleport home.</li>
+      <li><b>Let the remote market sell scrap as well as ingots</b>, or its Robux price is hard to justify.</li>
+      <li><b>Keep automation strictly below active play</b>, permanently. Drones should be the floor for players who cannot grind, never the optimal strategy.</li>
+      <li><b>Raise or remove the 6-hour offline drone cap</b> and tie it to upgrades — it currently works as a login tether rather than automation.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h4>Structural · the actual retention work</h4>
+    <ul class="facts">
+      <li><b>Differentiate zones and gate them behind rebirth.</b> Highest-impact change available, and the only thing that makes a steep curve survivable.</li>
+      <li><b>Implement the stated concept.</b> NASO contracts, company rank, sector assignments — the fantasy already exists in item text.</li>
+      <li><b>Give charged ingots a role</b> beyond being worth more: a second currency for zone unlocks and high-tier gear.</li>
+      <li><b>Contracts and bounties.</b> Rotating timed objectives give a goal for the next fifteen minutes instead of an open-ended grind.</li>
+      <li><b>Team missions and co-op zones.</b> Group jobs that pay more turn other players into content — the only content source that scales without dev time.</li>
+      <li><b>Event variety.</b> Both known events are +75% to sale value. Vary the <i>type</i>, not the size.</li>
+      <li><b>Risk zones as a mini-game.</b> High density, real danger, cargo lost on death. Rewards skill instead of time.</li>
+      <li><b>Give merchants a character.</b> Rivet is a vending machine. A face, a line of dialogue, a daily quest.</li>
+      <li><b>Milestone cosmetics by rebirth tier.</b> Visible progress is its own retention loop.</li>
+      <li><b>Something beyond rebirth 30.</b> Seasons, mastery, leaderboards — the curve should not be the only endgame.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:14px;">
+  <h4>The principle underneath all of it</h4>
+  <p><b>Gate by rebirth count, never by price alone.</b> Stars can be bought with Robux; rebirth count cannot. Any gate keyed to a star or credit price can be skipped with money, and any gate keyed to rebirth number cannot.</p>
+  <p>This protects the economy without touching monetisation, and it is a better product for paying players too — buying stars still speeds them toward gates, it simply cannot carry them past one. Their purchase keeps its value instead of trivialising the game they paid to enjoy.</p>
+</div>
+
+<!-- =================== PART 3 =================== -->
+<div class="partbar" id="p3">
+  <div class="pn">Part Three</div>
+  <h2>The Redesigned Game</h2>
+  <p>Applying everything above. A new economy costed against a gathering model calibrated to real measurements, the gameplay systems that give the loop somewhere to go, and an endgame that continues past rebirth 30 instead of ending there.</p>
+</div>
+
+<div class="sec">
+  <h3 style="margin-bottom:12px;">What changes, in one view</h3>
+  <div class="vs">
+    <div class="now"><h5>Today</h5><p>Fly out, fill inventory, fly back, dump into crusher, collect from furnace, sell. Repeat identically at rebirth 15 as at rebirth 3. Zones are interchangeable. Rebirth resets a counter.</p></div>
+    <div class="then"><h5>Redesigned</h5><p>NASO assigns you contracts. Rank gates which sectors you are cleared for. Each sector is denser, richer and more dangerous than the last. Rebirth is promotion — it opens the next sector and pays out permanent standing.</p></div>
+  </div>
+  <div class="vs">
+    <div class="now"><h5>Today</h5><p>Cost ×1.4 forever against a hard income ceiling. Rebirth 25 costs 10.6 hours, rebirth 30 costs 57 hours. The game has a mathematical end point nobody reaches.</p></div>
+    <div class="then"><h5>Redesigned</h5><p>Cost curve derived from a designed time curve — averaging ×1.28, decaying late. Thirty rebirths in 37 hours, no single rebirth over four hours, and an endgame built on optimisation rather than a steeper wall.</p></div>
+  </div>
+  <div class="vs">
+    <div class="now"><h5>Today</h5><p>Drones run only while away, cap at six hours, and hold output hostage until claimed. Autonomous Fleet supplies about 4% of what active play does.</p></div>
+    <div class="then"><h5>Redesigned</h5><p>Five drone tiers scaling to roughly a quarter of active income, running online once Drone Uplink is unlocked. Meaningful, never dominant — the answer to "play or idle" stays "play".</p></div>
+  </div>
+</div>
+
+<div class="sec">
+  <h3 style="margin-bottom:12px;">New gameplay systems</h3>
+
+  <div class="panel">
+    <span class="verdict v-new">Core addition</span>
+    <h4>NASO Contracts</h4>
+    <p>The premise already says NASO sends workers on missions. Contracts make that literal. A board at the base offers three rotating jobs at a time, refreshing every twenty minutes or on completion.</p>
+    <div class="tw" style="margin-top:11px;"><table>
+      <thead><tr><th>Contract type</th><th>Example</th><th>Reward</th></tr></thead>
+      <tbody>
+        <tr><td><b>Haul</b></td><td>Deliver 400 units of processed scrap</td><td class="g">Credits, scaled to rank</td></tr>
+        <tr><td><b>Salvage</b></td><td>Recover 30 Meteor-class scrap specifically</td><td class="g">Credits + scrap-type bonus</td></tr>
+        <tr><td><b>Rush</b></td><td>Sell 5,000 credits' worth during a single market window</td><td class="g">Credit multiplier for the next sale</td></tr>
+        <tr><td><b>Sweep</b></td><td>Clear a marked debris cluster in the current sector</td><td class="g">Charged scrap</td></tr>
+        <tr><td><b>Crew</b></td><td>Complete a haul alongside another player</td><td class="g">Double rewards for both</td></tr>
+      </tbody>
+    </table></div>
+    <p style="margin-top:12px;">Contracts cost almost nothing to build — they read existing counters. What they buy is enormous: a player always has <b>a goal for the next fifteen minutes</b> rather than an open-ended grind, and sessions gain a shape. They are also the natural home for daily and weekly objectives later.</p>
+  </div>
+
+  <div class="panel">
+    <span class="verdict v-new">Core addition</span>
+    <h4>Company Rank</h4>
+    <p>Rebirth stops being a counter and becomes a promotion. Rank is earned by rebirth count, which cannot be bought, and it gates sector access, contract tiers and gear.</p>
+    <div style="margin-top:11px;">
+      <div class="rank"><span class="rr">R0–R3</span><span class="rname">Sweeper</span><span class="rdesc">Home Belt only. Basic haul contracts. Learning the loop.</span></div>
+      <div class="rank"><span class="rr">R4–R8</span><span class="rname">Salvager</span><span class="rdesc">Ember Drift cleared. Salvage contracts unlock. First charged scrap.</span></div>
+      <div class="rank"><span class="rr">R9–R14</span><span class="rname">Reclaimer</span><span class="rdesc">Rusted Expanse cleared. Crew contracts unlock. Drone bay licensed.</span></div>
+      <div class="rank"><span class="rr">R15–R21</span><span class="rname">Foreman</span><span class="rdesc">Cinder Reach cleared. Can lead crew contracts and set shared objectives.</span></div>
+      <div class="rank"><span class="rr">R22–R29</span><span class="rname">Overseer</span><span class="rdesc">The Scarline cleared. Hazard contracts. Full drone fleet authority.</span></div>
+      <div class="rank"><span class="rr">R30+</span><span class="rname">Salvage Marshal</span><span class="rdesc">Seasonal content, mastery tracks, leaderboards, cosmetic prestige.</span></div>
+    </div>
+    <p style="margin-top:12px;">Ranks give the game something to <i>say</i> at every rebirth. A promotion screen with a new title, a new sector clearance and a new contract type is dramatically more motivating than a number moving from 14 to 15.</p>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <span class="verdict v-new">Sectors</span>
+      <h4>Zones with a reason to travel</h4>
+      <p>Five sectors, each gated by rank. Density multiplies how fast you gather; yield multiplies how much crushed material each scrap produces; charged fraction multiplies value.</p>
+      <div class="tw" style="margin-top:11px;"><table>
+        <thead><tr><th>Sector</th><th>Rank</th><th>Density</th><th>Yield</th><th>Charged</th><th>Avg value</th></tr></thead>
+        <tbody>
+          <tr><td><b>Home Belt</b></td><td class="c">R0</td><td class="mono">×1.0</td><td class="mono">×1.0</td><td class="mono">—</td><td class="g">10.0</td></tr>
+          <tr><td><b>Ember Drift</b></td><td class="c">R4</td><td class="mono">×1.3</td><td class="mono">×1.2</td><td class="mono">8%</td><td class="g">13.9</td></tr>
+          <tr><td><b>Rusted Expanse</b></td><td class="c">R9</td><td class="mono">×1.7</td><td class="mono">×1.5</td><td class="mono">16%</td><td class="g">19.8</td></tr>
+          <tr><td><b>Cinder Reach</b></td><td class="c">R15</td><td class="mono">×2.2</td><td class="mono">×1.9</td><td class="mono">25%</td><td class="g">28.5</td></tr>
+          <tr><td><b>The Scarline</b></td><td class="c">R22</td><td class="mono">×2.8</td><td class="mono">×2.4</td><td class="mono">35%</td><td class="g">40.8</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted" style="margin-top:11px;font-size:12.5px;">Three separate multipliers rather than one keeps each sector feeling different rather than simply richer — a dense sector with low yield plays differently to a sparse one full of charged scrap.</p>
+    </div>
+
+    <div class="panel">
+      <span class="verdict v-new">Automation</span>
+      <h4>Drone fleet, rebuilt</h4>
+      <p>Five tiers, rank-gated, scaling to about a quarter of active income at the top. Drones support active play rather than replacing it.</p>
+      <div class="tw" style="margin-top:11px;"><table>
+        <thead><tr><th>Drone</th><th>Rank</th><th>Rate</th><th>Credits</th><th>Share of active</th></tr></thead>
+        <tbody>
+          <tr><td><b>Scout Drone</b></td><td class="c">R2</td><td class="mono">220/hr</td><td class="g">18,000</td><td class="mono">6%</td></tr>
+          <tr><td><b>Cargo Drone</b></td><td class="c">R6</td><td class="mono">900/hr</td><td class="g">120,000</td><td class="mono">10%</td></tr>
+          <tr><td><b>Drone Swarm</b></td><td class="c">R11</td><td class="mono">2,800/hr</td><td class="g">900,000</td><td class="mono">14%</td></tr>
+          <tr><td><b>Autonomous Fleet</b></td><td class="c">R16</td><td class="mono">7,500/hr</td><td class="g">9,000,000</td><td class="mono">19%</td></tr>
+          <tr><td><b>Quantum Fleet</b></td><td class="c">R22</td><td class="mono">16,000/hr</td><td class="g">90,000,000</td><td class="mono">26%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted" style="margin-top:11px;font-size:12.5px;">Offline accumulation continues, with the cap raised by upgrade rather than fixed at six hours. Drone Uplink at R14 lets the bay run while online too — the point where drones stop being a login chore and become part of the base.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="verdict v-new">Endgame</span>
+    <h4>Past rebirth 30 — mastery, not a steeper wall</h4>
+    <p>The current curve simply keeps multiplying, which means the endgame is the same activity for longer. Rebirth 30 should instead open a different mode of play.</p>
+    <ul class="facts">
+      <li><b>Seasonal sectors.</b> A rotating sixth sector with its own modifiers, running six to eight weeks. New density, new hazards, a seasonal scrap type. This is the content source that scales — one sector per season keeps the game alive indefinitely without touching the core curve.</li>
+      <li><b>Mastery tracks per sector.</b> Long-horizon objectives — clear ten thousand units from The Scarline, complete fifty hazard contracts — paying permanent small bonuses and cosmetics. Gives dedicated players a reason to keep playing one sector deeply.</li>
+      <li><b>Weekly leaderboards</b> on credits earned, contracts completed and rare scrap recovered, resetting each week so newer players can compete. Competition is content the developers do not have to build twice.</li>
+      <li><b>Prestige cosmetics by rank.</b> Jetpack trails, magnet skins, base decorations, name tags. Visible progress is its own retention loop and costs nothing to balance.</li>
+      <li><b>Endless rebirth with diminishing rewards</b> past R30 — still climbing, but no longer the primary activity. The player who wants a number to chase keeps one; everyone else has contracts, seasons and mastery.</li>
+      <li><b>Crew guilds.</b> Shared objectives across a group with pooled progress. The single strongest retention mechanic available, because it makes other players the reason to come back.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <span class="verdict v-new">Depth</span>
+    <h4>Variance and skill — the two missing content sources</h4>
+    <ul class="facts">
+      <li><b>Rare scrap with real variance.</b> Scrap Fortune already implies a luck stat. Make it visible: occasional high-value finds, a rare scrap type worth twenty times normal. Every run becomes a lottery ticket rather than a known quantity.</li>
+      <li><b>Event variety over event size.</b> Both current events are +75% to value. Density surges, zero-gravity windows, meteor showers dropping charged scrap, market crashes that reward holding inventory — each changes how an hour is played rather than just multiplying it.</li>
+      <li><b>Hazard sectors as a mini-game.</b> High density with real danger and cargo lost on death. Rewards jetpack thrust and skill instead of time spent, and gives confident players a faster route.</li>
+      <li><b>Market timing as a skill.</b> The ±30% swing and the two event types already create real decisions. Surface them properly — show the swing history, signal which event type is running — and selling becomes something players get good at.</li>
+      <li><b>Loadout choice.</b> Magnets currently differ only in strength. Give some wider range and weaker pull, others the reverse, and a genuinely different playstyle appears at no content cost.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ TIMELINE ============ -->
+<div class="sec" id="timeline">
+  <h3 style="margin-bottom:6px;">The optimal path, rebirth by rebirth</h3>
+  <p class="lede">Costed against a gathering model calibrated to real measurements — <b>rate = storage ÷ (30 s travel + storage ÷ (1.45 × pull × density))</b>, which reproduces the observed 4.83 units/sec exactly. Player behaviour is modelled realistically rather than optimally: new players sell near the middle of the market, learn event timing around rebirth 6–9, and the crew boost saturates from rebirth 9 as players add anyone in the server. <b>Highlighted rows are deliberate dips</b> where a major unlock lands and the next rebirth is faster than the last.</p>
+
+  <div class="cols3" style="margin-bottom:14px;">
+    <div class="panel"><h4>Phase 1 · R0–4 · Hook</h4><p style="font-size:13px;">33 minutes for five rebirths. The player sees prestige before boredom sets in and learns that rebirth is a reward. Nova Pulse at R3 more than doubles storage.</p></div>
+    <div class="panel"><h4>Phase 2 · R5–9 · Systems</h4><p style="font-size:13px;">1h 32m. Ember Drift brings the first charged scrap and the first drone arrives. Star spending begins with the vault unlocks.</p></div>
+    <div class="panel"><h4>Phase 3 · R10–14 · Compounding</h4><p style="font-size:13px;">3h 30m. Rusted Expanse, Golden Touch coming online, crew saturating. The stretch where the game should feel best.</p></div>
+    <div class="panel"><h4>Phase 4 · R15–21 · The Climb</h4><p style="font-size:13px;">9h 48m. Astra and Cinder Reach land together — the largest jump in the game. Rebirths stretch but each still brings something.</p></div>
+    <div class="panel"><h4>Phase 5 · R22–29 · Mastery</h4><p style="font-size:13px;">21h 43m. The Scarline and the Sphere Magnet are the last power spikes. From here it is market timing, event timing, drone uptime and contracts.</p></div>
+    <div class="panel good"><h4>Totals</h4><div class="kv" style="margin-top:8px;"><div><span>Full arc to R30</span><b>37h 06m</b></div><div><span>First rebirth</span><b>4 min</b></div><div><span>Longest single</span><b>4h 05m</b></div><div><span>Mean cost ratio</span><b>×1.28 median</b></div></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="tw"><table class="tl">
+      <thead><tr>
+        <th>Rebirth</th><th>Cost</th><th>Time</th><th>Elapsed</th><th>What unlocks</th>
+        <th>Storage</th><th>Pull</th><th>Rate</th><th>Value</th><th>Drone</th><th>Income</th>
+      </tr></thead>
+      <tbody>
+<tr>
+      <td class="rn">0→1<em>P1</em></td>
+      <td class="cost">2,568</td>
+      <td class="tm">4m</td>
+      <td class="cum">0h04</td>
+      <td class="gear"><div class="buy"><span class="bk jetpack">Jetpack</span><b>Falcon MK-II</b> — 600 cr<em>storage 60</em></div><div class="buy"><span class="bk magnet">Magnet</span><b>Ferrite Radial</b> — 250 cr<em>pull ×1.2 · 8 st</em></div></td>
+      <td class="st">60<em>storage</em></td>
+      <td class="st">×1.2<em>pull</em></td>
+      <td class="st">0.93<em>u/s</em></td>
+      <td class="st">10.0<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">38,522<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">1→2<em>P1</em></td>
+      <td class="cost">4,171</td>
+      <td class="tm">6m</td>
+      <td class="cum">0h10</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Ferrite Block</b> — 800 cr<em>pull ×1.4 · 10 st</em></div></td>
+      <td class="st">60<em>storage</em></td>
+      <td class="st">×1.4<em>pull</em></td>
+      <td class="st">1.01<em>u/s</em></td>
+      <td class="st">10.0<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">41,708<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">2→3<em>P1</em></td>
+      <td class="cost">5,929</td>
+      <td class="tm">8m</td>
+      <td class="cum">0h18</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Bonded Cylinder</b> — 2,200 cr<em>pull ×1.6 · 12 st</em></div><div class="buy"><span class="bk drone">Drone</span><b>Scout Drone</b> — 18,000 cr<em>220/hr</em></div></td>
+      <td class="st">60<em>storage</em></td>
+      <td class="st">×1.6<em>pull</em></td>
+      <td class="st">1.07<em>u/s</em></td>
+      <td class="st">10.0<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">44,467<em>cr/hr</em></td>
+    </tr>
+<tr class="dip">
+      <td class="rn">3→4<em>P1</em></td>
+      <td class="cost">7,252</td>
+      <td class="tm">6m</td>
+      <td class="cum">0h24</td>
+      <td class="gear"><div class="buy"><span class="bk jetpack">Jetpack</span><b>Nova Pulse</b> — 6,000 cr<em>storage 140</em></div></td>
+      <td class="st">140<em>storage</em></td>
+      <td class="st">×1.6<em>pull</em></td>
+      <td class="st">1.55<em>u/s</em></td>
+      <td class="st">10.0<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">72,522<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">4→5<em>P1</em></td>
+      <td class="cost">19,801</td>
+      <td class="tm">9m</td>
+      <td class="cum">0h33</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Bonded Ring</b> — 9,000 cr<em>pull ×1.9 · 14 st</em></div><div class="buy"><span class="bk zone">Zone</span><b>Ember Drift</b><em>×1.3 density · ×1.2 yield · 8% charged</em></div></td>
+      <td class="st">140<em>storage</em></td>
+      <td class="st">×1.9<em>pull</em></td>
+      <td class="st">2.03<em>u/s</em></td>
+      <td class="st">13.9<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">132,008<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">5→6<em>P2</em></td>
+      <td class="cost">38,383</td>
+      <td class="tm">14m</td>
+      <td class="cum">0h47</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Bonded Block</b> — 16,000 cr<em>pull ×2.2 · 16 st</em></div></td>
+      <td class="st">140<em>storage</em></td>
+      <td class="st">×2.2<em>pull</em></td>
+      <td class="st">2.2<em>u/s</em></td>
+      <td class="st">13.9<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">164,500<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">6→7<em>P2</em></td>
+      <td class="cost">66,125</td>
+      <td class="tm">18m</td>
+      <td class="cum">1h05</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Alnico Cylinder</b> — 30,000 cr<em>pull ×2.6 · 18 st</em></div><div class="buy"><span class="bk drone">Drone</span><b>Cargo Drone</b> — 120,000 cr<em>900/hr</em></div></td>
+      <td class="st">140<em>storage</em></td>
+      <td class="st">×2.6<em>pull</em></td>
+      <td class="st">2.39<em>u/s</em></td>
+      <td class="st">13.9<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">220,417<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">7→8<em>P2</em></td>
+      <td class="cost">99,407</td>
+      <td class="tm">23m</td>
+      <td class="cum">1h28</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Alnico Bar</b> — 55,000 cr<em>pull ×3.0 · 21 st</em></div></td>
+      <td class="st">140<em>storage</em></td>
+      <td class="st">×3.0<em>pull</em></td>
+      <td class="st">2.56<em>u/s</em></td>
+      <td class="st">13.9<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">259,323<em>cr/hr</em></td>
+    </tr>
+<tr class="dip">
+      <td class="rn">8→9<em>P2</em></td>
+      <td class="cost">106,583</td>
+      <td class="tm">16m</td>
+      <td class="cum">1h44</td>
+      <td class="gear"><div class="buy"><span class="bk jetpack">Jetpack</span><b>Vortex X</b> — 90,000 cr<em>storage 300</em></div></td>
+      <td class="st">300<em>storage</em></td>
+      <td class="st">×3.0<em>pull</em></td>
+      <td class="st">3.61<em>u/s</em></td>
+      <td class="st">13.9<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">399,687<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">9→10<em>P2</em></td>
+      <td class="cost">357,102</td>
+      <td class="tm">21m</td>
+      <td class="cum">2h05</td>
+      <td class="gear"><div class="buy"><span class="bk zone">Zone</span><b>Rusted Expanse</b><em>×1.7 density · ×1.5 yield · 16% charged</em></div></td>
+      <td class="st">300<em>storage</em></td>
+      <td class="st">×3.0<em>pull</em></td>
+      <td class="st">4.25<em>u/s</em></td>
+      <td class="st">19.8<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">1,020,292<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">10→11<em>P3</em></td>
+      <td class="cost">558,641</td>
+      <td class="tm">28m</td>
+      <td class="cum">2h33</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Alnico Horseshoe</b> — 230,000 cr<em>pull ×3.5 · 24 st</em></div></td>
+      <td class="st">300<em>storage</em></td>
+      <td class="st">×3.5<em>pull</em></td>
+      <td class="st">4.63<em>u/s</em></td>
+      <td class="st">19.8<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">1,197,087<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">11→12<em>P3</em></td>
+      <td class="cost">824,912</td>
+      <td class="tm">36m</td>
+      <td class="cum">3h09</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Samarium Block</b> — 340,000 cr<em>pull ×4.0 · 28 st</em></div><div class="buy"><span class="bk drone">Drone</span><b>Drone Swarm</b> — 900,000 cr<em>2,800/hr</em></div></td>
+      <td class="st">300<em>storage</em></td>
+      <td class="st">×4.0<em>pull</em></td>
+      <td class="st">4.96<em>u/s</em></td>
+      <td class="st">19.8<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">1,374,853<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">12→13<em>P3</em></td>
+      <td class="cost">1,054,054</td>
+      <td class="tm">46m</td>
+      <td class="cum">3h55</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">300<em>storage</em></td>
+      <td class="st">×4.0<em>pull</em></td>
+      <td class="st">4.96<em>u/s</em></td>
+      <td class="st">19.8<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">1,374,853<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">13→14<em>P3</em></td>
+      <td class="cost">1,422,447</td>
+      <td class="tm">58m</td>
+      <td class="cum">4h53</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Samarium Bar</b> — 720,000 cr<em>pull ×4.6 · 32 st</em></div></td>
+      <td class="st">300<em>storage</em></td>
+      <td class="st">×4.6<em>pull</em></td>
+      <td class="st">5.31<em>u/s</em></td>
+      <td class="st">19.8<em>cr/unit</em></td>
+      <td class="st">0%<em>drone</em></td>
+      <td class="st">1,471,497<em>cr/hr</em></td>
+    </tr>
+<tr class="dip">
+      <td class="rn">14→15<em>P3</em></td>
+      <td class="cost">1,248,777</td>
+      <td class="tm">42m</td>
+      <td class="cum">5h35</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Samarium Ring</b> — 1,050,000 cr<em>pull ×5.3 · 36 st</em></div></td>
+      <td class="st">300<em>storage</em></td>
+      <td class="st">×5.3<em>pull</em></td>
+      <td class="st">6.44<em>u/s</em></td>
+      <td class="st">19.8<em>cr/unit</em></td>
+      <td class="st">12%<em>drone</em></td>
+      <td class="st">1,783,967<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">15→16<em>P4</em></td>
+      <td class="cost">3,433,720</td>
+      <td class="tm">52m</td>
+      <td class="cum">6h27</td>
+      <td class="gear"><div class="buy"><span class="bk jetpack">Jetpack</span><b>Astra Mk.V</b> — 1,400,000 cr<em>storage 600</em></div><div class="buy"><span class="bk zone">Zone</span><b>Cinder Reach</b><em>×2.2 density · ×1.9 yield · 25% charged</em></div></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×5.3<em>pull</em></td>
+      <td class="st">9.94<em>u/s</em></td>
+      <td class="st">28.5<em>cr/unit</em></td>
+      <td class="st">8%<em>drone</em></td>
+      <td class="st">3,961,984<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">16→17<em>P4</em></td>
+      <td class="cost">4,930,618</td>
+      <td class="tm">66m</td>
+      <td class="cum">7h33</td>
+      <td class="gear"><div class="buy"><span class="bk drone">Drone</span><b>Autonomous Fleet</b> — 9,000,000 cr<em>7,500/hr</em></div></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×5.3<em>pull</em></td>
+      <td class="st">11.25<em>u/s</em></td>
+      <td class="st">28.5<em>cr/unit</em></td>
+      <td class="st">19%<em>drone</em></td>
+      <td class="st">4,482,380<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">17→18<em>P4</em></td>
+      <td class="cost">6,552,050</td>
+      <td class="tm">82m</td>
+      <td class="cum">8h55</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Neodymium Cylinder</b> — 3,300,000 cr<em>pull ×6.2 · 42 st</em></div></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×6.2<em>pull</em></td>
+      <td class="st">12.03<em>u/s</em></td>
+      <td class="st">28.5<em>cr/unit</em></td>
+      <td class="st">17%<em>drone</em></td>
+      <td class="st">4,794,183<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">18→19<em>P4</em></td>
+      <td class="cost">7,990,305</td>
+      <td class="tm">100m</td>
+      <td class="cum">10h35</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×6.2<em>pull</em></td>
+      <td class="st">12.03<em>u/s</em></td>
+      <td class="st">28.5<em>cr/unit</em></td>
+      <td class="st">17%<em>drone</em></td>
+      <td class="st">4,794,183<em>cr/hr</em></td>
+    </tr>
+<tr class="dip">
+      <td class="rn">19→20<em>P4</em></td>
+      <td class="cost">6,583,208</td>
+      <td class="tm">78m</td>
+      <td class="cum">11h53</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Neodymium Trapezoid</b> — 6,400,000 cr<em>pull ×7.1 · 48 st</em></div></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×7.1<em>pull</em></td>
+      <td class="st">12.7<em>u/s</em></td>
+      <td class="st">28.5<em>cr/unit</em></td>
+      <td class="st">16%<em>drone</em></td>
+      <td class="st">5,064,006<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">20→21<em>P4</em></td>
+      <td class="cost">8,018,010</td>
+      <td class="tm">95m</td>
+      <td class="cum">13h28</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×7.1<em>pull</em></td>
+      <td class="st">12.7<em>u/s</em></td>
+      <td class="st">28.5<em>cr/unit</em></td>
+      <td class="st">16%<em>drone</em></td>
+      <td class="st">5,064,006<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">21→22<em>P4</em></td>
+      <td class="cost">9,706,012</td>
+      <td class="tm">115m</td>
+      <td class="cum">15h23</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×7.1<em>pull</em></td>
+      <td class="st">12.7<em>u/s</em></td>
+      <td class="st">28.5<em>cr/unit</em></td>
+      <td class="st">16%<em>drone</em></td>
+      <td class="st">5,064,006<em>cr/hr</em></td>
+    </tr>
+<tr class="dip">
+      <td class="rn">22→23<em>P5</em></td>
+      <td class="cost">14,079,119</td>
+      <td class="tm">88m</td>
+      <td class="cum">16h51</td>
+      <td class="gear"><div class="buy"><span class="bk magnet">Magnet</span><b>Neodymium Sphere</b> — 18,000,000 cr<em>pull ×8.0 · 56 st</em></div><div class="buy"><span class="bk zone">Zone</span><b>The Scarline</b><em>×2.8 density · ×2.4 yield · 35% charged</em></div><div class="buy"><span class="bk drone">Drone</span><b>Quantum Fleet</b> — 90,000,000 cr<em>16,000/hr</em></div></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">23→24<em>P5</em></td>
+      <td class="cost">16,958,938</td>
+      <td class="tm">106m</td>
+      <td class="cum">18h37</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">24→25<em>P5</em></td>
+      <td class="cost">20,158,738</td>
+      <td class="tm">126m</td>
+      <td class="cum">20h43</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">25→26<em>P5</em></td>
+      <td class="cost">23,998,498</td>
+      <td class="tm">150m</td>
+      <td class="cum">23h13</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">26→27<em>P5</em></td>
+      <td class="cost">27,518,277</td>
+      <td class="tm">172m</td>
+      <td class="cum">26h05</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">27→28<em>P5</em></td>
+      <td class="cost">31,358,037</td>
+      <td class="tm">196m</td>
+      <td class="cum">29h21</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">28→29<em>P5</em></td>
+      <td class="cost">35,197,797</td>
+      <td class="tm">220m</td>
+      <td class="cum">33h01</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+<tr>
+      <td class="rn">29→30<em>P5</em></td>
+      <td class="cost">39,197,546</td>
+      <td class="tm">245m</td>
+      <td class="cum">37h06</td>
+      <td class="gear"><span class="none">— no unlock: optimise and bank —</span></td>
+      <td class="st">600<em>storage</em></td>
+      <td class="st">×8.0<em>pull</em></td>
+      <td class="st">16.82<em>u/s</em></td>
+      <td class="st">40.8<em>cr/unit</em></td>
+      <td class="st">26%<em>drone</em></td>
+      <td class="st">9,599,399<em>cr/hr</em></td>
+    </tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <h4>Why the curve is shaped this way</h4>
+      <ul class="facts">
+        <li><b>Five rebirths in the first half hour.</b> A player who has never rebirthed does not know why they would want to. Make the first one nearly free.</li>
+        <li><b>The dips are load-bearing.</b> At R3, R8, R14, R19 and R22 a major unlock lands and the next rebirth is <i>faster</i> than the last. A monotonic climb reads as punishment; a sawtooth reads as progress.</li>
+        <li><b>No reward is more than two rebirths from the wall it solves.</b> If the pain starts at R9 and the fix arrives at R15, players quit at R11.</li>
+        <li><b>Every unlock is worth at least a doubling.</b> Anything smaller is invisible against a compounding cost curve.</li>
+        <li><b>The cost curve is not a fixed exponent.</b> It averages ×1.28 and decays toward ×1.11 by R30, because time targets grow while gathering plateaus. <b>No single fixed multiplier can produce a humane thirty-rebirth curve</b> — that is the root of the current problem.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Star Exchange spend order</h4>
+      <p style="font-size:13px;" class="muted">Stars are earned 1 per rebirth for R1–4, 2 each for R5–9, 3 each from R10.</p>
+      <ul class="facts" style="margin-top:8px;">
+        <li><b>R1–2 · bank them.</b> Nothing is worth one star, and saving buys the important unlock sooner.</li>
+        <li><b>R3 · Furnace Vault (3★).</b> The highest-value purchase in the game — furnaces survive rebirth, and so do the ingots inside them.</li>
+        <li><b>R5 · Gear Locker (2★).</b> Magnets and jetpacks stop resetting, which is what makes the buying order above safe.</li>
+        <li><b>R7 · Crusher Vault (3★).</b> Completes machine protection. Rebirth becomes close to lossless.</li>
+        <li><b>R8–12 · Golden Touch 1–5 (2★ each).</b> The first pure multiplier; compounds with everything.</li>
+        <li><b>R13 · Star Vault (2★).</b> Keeps 25% of credits through every reset thereafter.</li>
+        <li><b>R14 · Drone Uplink (3★).</b> Drones run while online — the point the fleet becomes real.</li>
+        <li><b>R15 · Piping System (3★).</b> Auto-feeds furnaces exactly when volume gets heavy.</li>
+        <li><b>R16+ ·</b> Star Magnet, Deep Pockets, Scrap Fortune, then the speed upgrades.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APPENDIX ============ -->
+<div class="sec" id="gaps">
+  <div class="partbar" style="margin-top:20px;">
+    <div class="pn">Appendix</div>
+    <h2>Assumptions &amp; Information Gaps</h2>
+    <p>Everything resting on inference rather than measurement. Where a number was needed and unavailable it was derived logically and is flagged as such — none of it is presented as verified.</p>
+  </div>
+  <div class="cols">
+    <div class="panel warn">
+      <h4>Assumptions used</h4>
+      <ul class="facts warn">
+        <li><b>30 seconds travel overhead per trip</b>, fitted from the measured 90-second trip at 435 storage and ×5.0 pull. If travel is nearer 20 seconds the model shifts about 15%, but the shape holds.</li>
+        <li><b>One storage unit yields one ingot.</b> Scrap types occupy different amounts of storage and yield at least as much as they take, so income figures are a floor rather than an estimate.</li>
+        <li><b>Gathering scales linearly with magnet pull.</b> Range may contribute separately.</li>
+        <li><b>Zone density multiplies gathering directly</b>, and yield multiplies crushed output. Both are proposed systems, untested because zones are currently undifferentiated.</li>
+        <li><b>Crew boost saturates at ×1.40</b> from R9. The real cap is unknown.</li>
+        <li><b>Market behaviour by stage</b> — +15% early rising to +85% once event timing is learned — is modelled from observation, not logged data.</li>
+        <li><b>Drone output is additive with active gathering</b> once Drone Uplink is owned.</li>
+      </ul>
+    </div>
+    <div class="panel crit">
+      <h4>Still needed</h4>
+      <ul class="facts bad">
+        <li><b>Scrap-to-ingot ratio per type</b>, and storage cost per type. Affects every income figure here.</li>
+        <li><b>Base crush time per scrap.</b> Crusher multipliers are relative until this exists.</li>
+        <li><b>Crusher plot size</b> — whether it matches the furnace plot.</li>
+        <li><b>Plot expansion cost per cell.</b></li>
+        <li><b>Whether machines have any capacity ceiling.</b> None observed.</li>
+        <li><b>Equipment Shop contents</b> — the third base shop is uncatalogued.</li>
+        <li><b>The 435 inventory arithmetic.</b> Astra 210 plus Deep Pockets 15 accounts for 225; another 210 is unexplained.</li>
+        <li><b>Star cost curve</b> — whether levels cost progressively more.</li>
+        <li><b>Ingot Rush duration</b>, and whether other events drift like Star Flare.</li>
+        <li><b>Crew boost cap</b>, and whether it counts friends or any player present.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer>Cosmic Cleaners · player-authored design report · model calibrated against 10 verified sales and in-game source values</footer>
+
+</div>
+</body>
+</html>
